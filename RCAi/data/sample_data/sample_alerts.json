@@ -1,0 +1,10 @@
+{
+  "events": [
+    {"timestamp": "2026-08-29T09:00:00", "severity": "warning", "message": "CPUUtilization crossed 78% on i-0a1b2c3d", "resource": "i-0a1b2c3d"},
+    {"timestamp": "2026-08-29T09:04:00", "severity": "critical", "message": "CPUUtilization sustained above 96% for 5 minutes", "resource": "i-0a1b2c3d"},
+    {"timestamp": "2026-08-29T09:05:00", "severity": "error", "message": "Health check failed for target group prod-tg-1", "resource": "prod-tg-1"},
+    {"timestamp": "2026-08-29T09:06:00", "severity": "critical", "message": "5xx error rate spiked to 38% of total requests", "resource": "prod-alb"},
+    {"timestamp": "2026-08-29T09:12:00", "severity": "info", "message": "Auto Scaling launched replacement instance i-0f9e8d7c", "resource": "prod-asg-1"},
+    {"timestamp": "2026-08-29T09:15:00", "severity": "info", "message": "5xx error rate recovered to baseline", "resource": "prod-alb"}
+  ]
+}

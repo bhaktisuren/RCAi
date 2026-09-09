@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RCAi — Root Cause Analysis Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RCA<span>i</span></div>
+      <div class="brand-sub">Root Cause Analysis Intelligence</div>
+    </div>
+
+    <button class="btn btn-primary btn-block" id="newIncidentBtn">+ New investigation</button>
+
+    <div class="sidebar-section-label">Investigations</div>
+    <div class="incident-list" id="incidentList">
+      <div class="empty-hint">No investigations yet</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="status-row" id="statusAI"><span class="dot dot-off"></span> AI engine</div>
+      <div class="status-row" id="statusCW"><span class="dot dot-off"></span> CloudWatch</div>
+      <div class="status-row" id="statusS247"><span class="dot dot-off"></span> Site24x7</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Step nav -->
+    <nav class="stepnav" id="stepnav">
+      <button class="step active" data-step="setup"><span>01</span>Define incident</button>
+      <button class="step" data-step="ingest"><span>02</span>Collect evidence</button>
+      <button class="step" data-step="analyze"><span>03</span>Correlate &amp; detect</button>
+      <button class="step" data-step="report"><span>04</span>RCA report</button>
+    </nav>
+
+    <!-- STEP 1: Setup -->
+    <section class="panel active" id="panel-setup">
+      <div class="panel-head">
+        <h1>Define the incident</h1>
+        <p>Give the investigation a name and time window. RCAi will pull and correlate evidence for this window only.</p>
+      </div>
+      <form id="incidentForm" class="form-grid">
+        <label class="field span-2">
+          <span>Incident title</span>
+          <input type="text" name="title" placeholder="e.g. Checkout API 5xx spike" required>
+        </label>
+        <label class="field span-2">
+          <span>Description / initial symptom report</span>
+          <textarea name="description" rows="3" placeholder="What did the on-call engineer or customer first report?"></textarea>
+        </label>
+        <label class="field">
+          <span>Reported by</span>
+          <input type="text" name="reported_by" placeholder="e.g. Priya S.">
+        </label>
+        <label class="field">
+          <span>&nbsp;</span>
+          <div class="hint">Time window defaults to the last hour — adjust to match the incident.</div>
+        </label>
+        <label class="field">
+          <span>Window start</span>
+          <input type="datetime-local" name="start_time" required>
+        </label>
+        <label class="field">
+          <span>Window end</span>
+          <input type="datetime-local" name="end_time" required>
+        </label>
+        <div class="span-2 form-actions">
+          <button type="submit" class="btn btn-primary">Create investigation →</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- STEP 2: Ingest -->
+    <section class="panel" id="panel-ingest">
+      <div class="panel-head">
+        <h1>Collect evidence</h1>
+        <p>Pull from monitoring sources or upload raw logs / alert exports. Everything lands in one normalized timeline below.</p>
+      </div>
+
+      <div class="source-grid">
+        <div class="source-card">
+          <div class="source-card-head">
+            <div class="source-icon">☁</div>
+            <div>
+              <div class="source-title">AWS CloudWatch</div>
+              <div class="source-sub" id="cwModeLabel">demo mode</div>
+            </div>
+          </div>
+          <p>Alarms, metrics, and health-check events for the incident window.</p>
+          <button class="btn btn-secondary btn-block" id="fetchCW">Fetch CloudWatch data</button>
+        </div>
+
+        <div class="source-card">
+          <div class="source-card-head">
+            <div class="source-icon">◎</div>
+            <div>
+              <div class="source-title">Site24x7</div>
+              <div class="source-sub" id="s247ModeLabel">demo mode</div>
+            </div>
+          </div>
+          <p>Uptime, response-time, and availability alerts for monitored endpoints.</p>
+          <button class="btn btn-secondary btn-block" id="fetchS247">Fetch Site24x7 data</button>
+        </div>
+
+        <div class="source-card">
+          <div class="source-card-head">
+            <div class="source-icon">⇪</div>
+            <div>
+              <div class="source-title">Upload logs / export</div>
+              <div class="source-sub">.log · .txt · .json · .csv</div>
+            </div>
+          </div>
+          <p>Application logs, alert exports, or any other tool's data dump.</p>
+          <input type="file" id="fileInput" hidden accept=".log,.txt,.json,.csv">
+          <button class="btn btn-secondary btn-block" id="uploadBtn">Choose file…</button>
+        </div>
+
+        <div class="source-card">
+          <div class="source-card-head">
+            <div class="source-icon">✎</div>
+            <div>
+              <div class="source-title">Manual note</div>
+              <div class="source-sub">engineer observation</div>
+            </div>
+          </div>
+          <p>Add something you noticed that isn't in any tool yet.</p>
+          <button class="btn btn-secondary btn-block" id="manualBtn">Add manual event</button>
+        </div>
+      </div>
+
+      <div class="timeline-head">
+        <h2>Normalized timeline <span class="count-badge" id="eventCount">0</span></h2>
+      </div>
+      <div class="event-table-wrap">
+        <table class="event-table" id="eventTable">
+          <thead><tr><th>Time</th><th>Source</th><th>Severity</th><th>Message</th><th>Resource</th></tr></thead>
+          <tbody><tr><td colspan="5" class="empty-hint">No events collected yet</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" id="goToAnalyze">Continue to correlation →</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Analyze -->
+    <section class="panel" id="panel-analyze">
+      <div class="panel-head">
+        <h1>Correlate &amp; detect anomalies</h1>
+        <p>Deterministic engine groups events by time proximity and flags statistical outliers — before any AI reasoning happens.</p>
+      </div>
+
+      <div class="analyze-empty" id="analyzeEmpty">
+        <button class="btn btn-primary btn-lg" id="runAnalysis">Run correlation + generate AI root cause analysis</button>
+        <p class="hint">This sends the correlated timeline (not raw AI guesswork) to the AI engine for reasoning.</p>
+      </div>
+
+      <div id="analyzeResults" class="hidden">
+        <h2>Correlated clusters <span class="count-badge" id="clusterCount">0</span></h2>
+        <div class="cluster-list" id="clusterList"></div>
+
+        <h2>Detected anomalies <span class="count-badge" id="anomalyCount">0</span></h2>
+        <div class="anomaly-list" id="anomalyList"></div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="goToReport">View RCA report →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 4: Report -->
+    <section class="panel" id="panel-report">
+      <div class="panel-head panel-head-row">
+        <div>
+          <h1>Root cause analysis report</h1>
+          <p>Editable before export. <span class="legend-tag legend-evidence">Confirmed evidence</span> is traceable to raw data. <span class="legend-tag legend-inference">AI inference</span> is the model's reasoning.</p>
+        </div>
+        <div class="export-actions">
+          <button class="btn btn-ghost" id="saveEditsBtn">Save edits</button>
+          <button class="btn btn-secondary" id="exportDocx">Download .docx (editable)</button>
+          <button class="btn btn-primary" id="exportPdf">Download PDF</button>
+        </div>
+      </div>
+
+      <div id="reportEmpty" class="empty-hint">No RCA generated yet — go to step 3.</div>
+
+      <div id="reportBody" class="hidden report-body">
+
+        <div class="report-card">
+          <h3>Executive summary</h3>
+          <div class="editable" contenteditable="true" id="f_summary"></div>
+        </div>
+
+        <div class="report-card">
+          <h3>Root cause <span class="legend-tag legend-inference">AI inference</span></h3>
+          <label class="mini-label">Statement</label>
+          <div class="editable" contenteditable="true" id="f_rc_statement"></div>
+          <label class="mini-label">Confidence</label>
+          <select id="f_rc_confidence"><option>High</option><option>Medium</option><option>Low</option></select>
+          <label class="mini-label">Reasoning</label>
+          <div class="editable" contenteditable="true" id="f_rc_reasoning"></div>
+        </div>
+
+        <div class="report-card">
+          <h3>Confirmed evidence <span class="legend-tag legend-evidence">from data</span></h3>
+          <table class="evidence-table" id="f_evidence_table">
+            <thead><tr><th>Finding</th><th>Source reference</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="report-card">
+          <h3>Contributing factors</h3>
+          <div id="f_factors_list"></div>
+        </div>
+
+        <div class="report-card">
+          <h3>Incident impact</h3>
+          <label class="mini-label">Summary</label>
+          <div class="editable" contenteditable="true" id="f_impact_summary"></div>
+          <label class="mini-label">Affected systems</label>
+          <div class="editable" contenteditable="true" id="f_impact_systems"></div>
+          <label class="mini-label">Estimated duration</label>
+          <div class="editable" contenteditable="true" id="f_impact_duration"></div>
+          <label class="mini-label">User impact</label>
+          <div class="editable" contenteditable="true" id="f_impact_user"></div>
+        </div>
+
+        <div class="report-card">
+          <h3>Resolution actions</h3>
+          <div id="f_resolution_list"></div>
+        </div>
+
+        <div class="report-card">
+          <h3>Preventive actions</h3>
+          <div id="f_preventive_list"></div>
+        </div>
+
+        <div class="report-card">
+          <h3>Timeline narrative</h3>
+          <div class="editable" contenteditable="true" id="f_narrative"></div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

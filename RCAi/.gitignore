@@ -1,0 +1,11 @@
+backend/.env
+backend/venv/
+**/__pycache__/
+**/*.pyc
+data/reports/*.json
+data/reports/*.pdf
+data/reports/*.docx
+data/uploads/*
+!data/reports/.gitkeep
+!data/uploads/.gitkeep
+.DS_Store

@@ -1,0 +1,8 @@
+2026-08-29T09:03:45 INFO checkout-service started processing order batch #4471
+2026-08-29T09:04:52 WARN checkout-service DB connection pool at 88% capacity
+2026-08-29T09:05:10 ERROR checkout-service Exception: Connection timeout to payments-db after 3000ms
+2026-08-29T09:05:11 ERROR checkout-service Exception: Connection timeout to payments-db after 3000ms
+2026-08-29T09:05:12 ERROR checkout-service Exception: Connection timeout to payments-db after 3000ms
+2026-08-29T09:05:40 CRITICAL checkout-service Circuit breaker OPEN for payments-db, failing fast
+2026-08-29T09:11:02 INFO checkout-service DB connection pool restored to 40% capacity
+2026-08-29T09:11:05 INFO checkout-service Circuit breaker CLOSED, normal operation resumed
